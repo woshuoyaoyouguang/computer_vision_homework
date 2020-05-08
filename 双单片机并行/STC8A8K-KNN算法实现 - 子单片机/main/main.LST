@@ -1,0 +1,385 @@
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:23 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: F:\keil5\C51\BIN\C51.EXE main.c COMPACT OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Public) DEBUG OBJECTEXTE
+                    -ND TABS(2)
+
+line level    source
+
+   1          /*»ùÓÚ51µ¥Æ¬»úµÄKNNËã·¨µÄÊµÏÖ*/
+   2          /*»ùÓÚ51µ¥Æ¬»úµÄKNNËã·¨µÄÊµÏÖ*/
+   3          /*»ùÓÚ51µ¥Æ¬»úµÄKNNËã·¨µÄÊµÏÖ*/
+   4          /*»ùÓÚ51µ¥Æ¬»úµÄKNNËã·¨µÄÊµÏÖ*/
+   5          #include "STC8A.h"
+   6          #include "KNN.h"
+   7          #include "train.h"
+   8          #define USART2_ReceLenght  2
+   9          
+  10          //×¢Òâxdata¶¨ÒåµÄÊý¾ÝÄÜ¹»µôµç±£³Ö£¬²¢ÇÒµ¥Æ¬»ú¸´Î»ºó²¢²»»á¸´Î»xdataÇøµÄÊý¾Ý
+  11          //RAMÇøÉÏµçºó³õÊ¼ÖµÊÇËæ»úµÄ£¬ÐèÒªÖØÐÂ×Ô¼º¸³³õÖµ
+  12          char xdata TestData[JZLenght+1];  //½ÓÊÕ²âÊÔÊý¾ÝÔÝ´æ£¬ÓÐÊ±ºò¾ØÕó»á¶àÒ»¸öÊý¾Ý³É1025×Ö½Ú
+  13          unsigned char  USART2_RecBuff[USART2_ReceLenght];
+  14          
+  15          unsigned char  USART2_SendBuff[Numtrain*3+3];
+  16          
+  17          int Timer0_Counter=0;
+  18          bit USART2_AllowSendFlag=0;
+  19          
+  20          //´®¿Ú1Êý¾Ý½ÓÊÜÍê³É±êÖ¾ÒÔ¼°½ÓÊÕÊý¾ÝµÄ¼ÆÊý
+  21          int ReceiveCounter=0;
+  22          uint8 RecOverFlag=0;
+  23          sbit LED = P2^6;  //LEDÖ¸Ê¾µÆ
+  24          sbit ReceDataReadly=P1^3;
+  25          
+  26          bit USART1_BUSY;   //´®¿Ú1·±Ã¦±êÖ¾
+  27          bit USART2_BUSY;   //´®¿Ú2·±Ã¦±êÖ¾
+  28          
+  29          //´®¿Ú2Êý¾Ý½ÓÊÜÍê³É±êÖ¾ÒÔ¼°½ÓÊÕÊý¾ÝµÄ¼ÆÊý
+  30          uint8 USART2_RecOverFlag=0;
+  31          uint8 USART2_ReceCount=0;
+  32          
+  33          Distance xdata distance[Numtrain]; //¾àÀëÖµÔÝ´æ,NumtrainÑµÁ·Êý¾ÝÄ£°å³¤¶È
+  34          
+  35          void exchange(Distance *in, uint8 index1,uint8 index2);
+  36          void selectSort(Distance *in, uint8 length);
+  37          void USART1_SendData(char Data);
+  38          //128 ×Ö½ÚÄÚ²¿Ö±½Ó·ÃÎÊ RAM£¨DATA£©
+  39          //128 ×Ö½ÚÄÚ²¿¼ä½Ó·ÃÎÊ RAM£¨IDATA£©
+  40          //8192 ×Ö½ÚÄÚ²¿À©Õ¹ RAM£¨ÄÚ²¿ XDATA£©
+  41          //Íâ²¿×î´ó¿ÉÀ©Õ¹ 64K ×Ö½Ú RAM£¨Íâ²¿ XDATA£©
+  42          
+  43          
+  44          
+  45          
+  46          
+  47          void USART1_SendData(uint8 Data)
+  48          {
+  49   1          while (USART1_BUSY);
+  50   1          USART1_BUSY = 1;
+  51   1          SBUF = Data;
+  52   1      }
+  53          
+  54          
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:23 PAGE 2   
+
+  55          
+  56          void USART1_SendStr(uint8 *Data,int Lenght)
+  57          {
+  58   1          int i;
+  59   1          for(i=0; i<Lenght; i++)
+  60   1          {
+  61   2              USART1_SendData(Data[i]);
+  62   2          }
+  63   1      }
+  64          
+  65          
+  66          //´®¿Ú2·¢ËÍÊý¾Ý
+  67          void USART2_SendData(uint8 Data)
+  68          {
+  69   1          while (USART2_BUSY);
+  70   1          USART2_BUSY = 1;
+  71   1          S2BUF = Data;
+  72   1      }
+  73          
+  74          //´®¿Ú2·¢ËÍ×Ö·û´®
+  75          void USART2_SendStr(uint8 *USARTData,int Lenght)
+  76          {
+  77   1          int j=0;
+  78   1          for(j=0; j<Lenght; j++)
+  79   1          {
+  80   2              USART2_SendData(USARTData[j]);
+  81   2          }
+  82   1      }
+  83          //ÇóÅ·Ê½¾àÀë
+  84          //digit1 ²âÊÔÊý¾Ý
+  85          //digit2 ÑµÁ·Êý¾Ý
+  86          //·µ»ØÖµ:intÀàÐÍ
+  87          int calDistance(char *digit1, char *digit2)
+  88          /*Çó¾àÀë*/
+  89          {
+  90   1          int i, squareSum=0.0;
+  91   1          for(i=0; i<JZLenght; i++)
+  92   1          {
+  93   2              //¸Ã´¦ÕâÑù×öµÄÄ¿µÄÊÇÌá¸ßÔËËãËÙ¶È£¬ÒòÎªÑµÁ·Êý¾Ý±ê±¾ÖÐÖ»ÓÐ0ºÍ1
+  94   2              //ËùÒÔÕâÖÖËã·¨´¦ÀíÖ»ÊÊÓÃÓÚ±ê±¾ÊÇ0ºÍ1µÄÑµÁ·Êý¾Ý
+  95   2              if(digit1[i]-digit2[i]!=0) squareSum+=1;
+  96   2          }
+  97   1          return  squareSum;  //·µ»Ø¾àÀëÖµ
+  98   1      }
+  99          
+ 100          //ÊäÈëin Ò»¸ö½á¹¹ÌåÊý×é
+ 101          //index1 ½á¹¹ÌåÊý×éµÄË÷Òý£¬Ç°Ò»¸öÊý
+ 102          //index2 ½á¹¹ÌåÊý×éµÄË÷Òý£¬ºóÒ»¸öÊý
+ 103          //Á½¸ö½á¹¹Ìå»¥»»
+ 104          void exchange(Distance *in, uint8 index1,uint8 index2)
+ 105          {
+ 106   1          Distance tmp;
+ 107   1          tmp = in[index1];
+ 108   1          in[index1] = in[index2];
+ 109   1          in[index2] = tmp;
+ 110   1      }
+ 111          
+ 112          
+ 113          //ÊäÈëin  Ò»¸ö½á¹¹ÌåÊý×é
+ 114          //lenght ÑµÁ·Êý¾ÝÄ£°åÊýÁ¿
+ 115          //´ÓÐ¡µ½´óÅÅÐò
+ 116          void selectSort(Distance *in, uint8 length)
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:23 PAGE 3   
+
+ 117          {
+ 118   1          uint8 i, j, min;
+ 119   1          uint8 N = length;
+ 120   1          for(i=0; i<N-1; i++)
+ 121   1          {
+ 122   2              min = i;
+ 123   2              //j=i+1 ¼´¸ÃÊý¾ÝºóÃæµÄÊý¾Ý
+ 124   2              //Ëã·¨Ë¼Ïë:Ã¿´ÎÑ­»·½«±È½ÏÐ¡Êý¾ÝÍùÇ°ÍÆÒ»´Î£¬Ö±µ½ËùÓÐÊý¾ÝÅÅÐòÕýÈ·
+ 125   2              //ÏÈÅÐ¶ÏÇ°Ò»¸öÊý¾ÝÊÇ·ñ´óÓÚºóÒ»¸öÊý¾Ý£¬Èç¹û´óÓÚÔò½»»»£¬²»´óÓëÔò²»½»»»
+ 126   2              //×î´ói*j´Î¿ÉÍê³ÉÅÅÐò
+ 127   2              for(j=i+1; j<N; j++)
+ 128   2              {
+ 129   3                  if(in[j].distance<in[min].distance) min = j;
+ 130   3              }
+ 131   2              exchange(in,i,min);
+ 132   2          }
+ 133   1      }
+ 134          
+ 135          //in  ÊäÈëÊý¾Ý¾ØÕó
+ 136          //train ²âÊÔÊý¾Ý¾ØÕó
+ 137          //K Ñ¡³ö¾àÀëÄ¿±êÖµ×î½üµÄÊý¾ÝµÄ¸öÊý
+ 138          //¶þÎ¬Êý×é×÷Îª²ÎÊý´«ÈëµÄÊ±ºò³¤¶ÈÃ»ÓÐ¼Ó1£¬µ¼ÖÂÊý¾Ý±êÇ©È«ÊÇ0
+ 139          //ÒòÎªÊý¾Ý±êÇ©´æ´¢ÔÚµÚ1025¸ö×Ö½Ú
+ 140          void prediction(uint8 K, char *in, char train[][JZLenght+1])
+ 141          {
+ 142   1          int it;
+ 143   1          /*ÇóÈ¡ÊäÈëdigitÓëÑµÁ·Êý¾ÝµÄ¾àÀë*/
+ 144   1          for(it=0; it<Numtrain; it++)
+ 145   1          {
+ 146   2              distance[it].distance = calDistance(in,train[it]);  //Çó²âÊÔÊý¾ÝÓëÑµÁ·Êý¾ÝµÄ¾àÀë
+ 147   2              distance[it].label = train[it][JZLenght];  //ÑµÁ·Êý¾ÝµÄÊý×Ö±àºÅ´æ·ÅÓÚÊý×é×îºóÒ»¸öÊý¾Ý×Ö½ÚÖÐ     
+ 148   2          }     
+ 149   1      }
+*** WARNING C280 IN LINE 140 OF main.c: 'K': unreferenced local variable
+ 150          
+ 151          void USART1_Init()
+ 152          {
+ 153   1          //³õ´Î¸³Öµ×îºÃ±ðÓÃ»òÔËËã£¬ÓÐBUG
+ 154   1          //ÕâÀï²»ÖªµÀÊÇÊ²Ã´Ô­Òò
+ 155   1          SCON=0x50;        //REN=1ÔÊÐí´®ÐÐ½ÓÊÜ×´Ì¬£¬´®¿Ú¹¤×÷Ä£Ê½1,9Î»¿É±ä²¨ÌØÂÊ
+ 156   1          TMOD = 0x00;       //¶¨Ê±Æ÷1ÎªÄ£Ê½0£¨16Î»×Ô¶¯ÖØÔØ)
+ 157   1          AUXR=0X40;     //¶¨Ê±Æ÷1¿ªÆô1TÄ£Ê½
+ 158   1          //9600²¨ÌØÂÊ£¬×¢Òâ²¨ÌØÂÊ²»ÄÜÉèÖÃÌ«¸ß£¬Ö®Ç°²âÊÔµÄÊ±ºò115200²¨ÌØÂÊµÄÊ±ºòÓÐÂÒÂë
+ 159   1          TL1=(65536-(11059200/4/9600));    //ÉèÖÃ²¨ÌØÂÊÖØ×°Öµ
+ 160   1          TH1=(65536-(11059200/4/9600))>>16;
+ 161   1      
+ 162   1          //´®¿Ú1µÄ·¢ËÍ¿ÚÉèÖÃÎªÍÆÍìÊä³ö,ÊÖ²áÉÏÓÐËµ£¬ÕâÀï×îºÃÊÇÉèÖÃÒ»ÏÂ
+ 163   1          //²»ÉèÖÃµÄ»°ËäÈ»Ò²ÄÜÕý³£·¢ËÍ£¬µ«ÊÇ°´STCÊÖ²áÉÏµÄÀ´°É£¬Òª²»È»ÓÖ»áÓÐ¿Ó
+ 164   1          //´Ó»ú´®¿Ú1²»ÐèÒª·¢ËÍÊý¾Ý£¬ËùÒÔÉèÖÃ³É¸ß×è×´Ì¬£¬¼õÉÙµçÁ÷ÏûºÄÒÔ»º½âUSB·¢ËÍ¿ÚµÄÇý¶¯Ñ¹Á¦
+ 165   1          //´®¿Ú1½ÓÊÕ¿ÚÔòÉèÖÃÎªË«Ïò¿Ú
+ 166   1          P3M1 &= ~0x01;  //P3.0¿ÚÉèÖÃ³ÉË«Ïò¿Ú
+ 167   1          P3M0 &= ~0x01; 
+ 168   1      
+ 169   1          P3M1 |=  0x02; //P3.1¿ÚÉèÖÃ³É¸ß×è×´Ì¬
+ 170   1          P3M0 &= ~0x02;
+ 171   1        
+ 172   1          TR1  = 1;        //¿ªÆô¶¨Ê±Æ÷1,,×÷Îª²¨ÌØÂÊ·¢ÉúÆ÷
+ 173   1          ES   = 1;        //¿ª´®¿ÚÖÐ¶Ï
+ 174   1          EA   = 1;        // ¿ª×ÜÖÐ¶Ï
+ 175   1      
+ 176   1          USART1_BUSY=0;   //´®¿Ú1Ã¦±êÖ¾³õÊ¼×´Ì¬Îª0
+ 177   1      }
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:23 PAGE 4   
+
+ 178          
+ 179          void USART2_Init()
+ 180          {
+ 181   1          S2CON = 0x50;   //Ä£Ê½0,8Î»¿É±ä²¨ÌØÂÊ,ÔÊÐí´®¿Ú½ÓÊÜÊý¾Ý
+ 182   1          T2L = (65536-(11059200/4/9600));   //ÉèÖÃ¶¨Ê±Æ÷2³õÖµ£¬ÓÃÓÚ²¨ÌØÂÊ·¢ÉúÆ÷£¬¸ÃÖµ¾ö¶¨²¨ÌØÂÊ
+ 183   1          T2H = (65536-(11059200/4/9600))>>8;
+ 184   1          AUXR |= 0x14;   //¿ª¶¨Ê±Æ÷2,Ê±ÖÓÎª1TÄ£Ê½£¬×÷Îª²¨ÌØÂÊ·¢ÉúÆ÷
+ 185   1          IE2 = 0x01;  //¿ªÆô´®¿Ú2µÄÖÐ¶Ï
+ 186   1          EA=1;
+ 187   1      
+ 188   1         
+ 189   1          
+ 190   1          
+ 191   1          P1M1 &= ~0x01; //P1.0 ´®¿Ú½ÓÊÕ¿ÚÉèÖÃ³ÉË«Ïò¿Ú
+ 192   1          P1M0 &= ~0x01;
+ 193   1          
+ 194   1          P1M1 &= ~0x02;
+ 195   1          P1M0 |=  0x02;    //P1.1·¢ËÍÊý¾ÝÇ°ÉèÖÃ³ÉÍÆÍìÊä³ö  
+ 196   1        
+ 197   1          USART2_BUSY=0;   //´®¿Ú1Ã¦±êÖ¾³õÊ¼×´Ì¬Îª0
+ 198   1      }
+ 199          
+ 200          void Timer0_Init(void)
+ 201          {
+ 202   1          AUXR &= ~0x80;  //¶¨Ê±Æ÷Ê±ÖÓ12TÄ£Ê½,¼´Ê±ÖÓ12·ÖÆµ(FOSC/12)
+ 203   1          TMOD |= 0x00;  //Ä£Ê½0,16Î»×Ô¶¯ÖØ×°ÔØ
+ 204   1          TL0 = 0x00;   //ÉèÖÃ¶¨Ê±³õÖµ
+ 205   1          TH0 = 0x4C;   //ÉèÖÃ¶¨Ê±³õÖµ
+ 206   1          TF0 = 0;    //Çå³ýTF0±êÖ¾
+ 207   1          TR0 = 0;    //³õÊ¼»¯Ê±¹Ø±Õ¶¨Ê±Æ÷
+ 208   1          ET0 = 1;      //Ê¹ÄÜ¶¨Ê±Æ÷ÖÐ¶Ï
+ 209   1          EA = 1;
+ 210   1      }
+ 211          
+ 212          void Clearn_TestData()
+ 213          {
+ 214   1          int i;
+ 215   1          for(i=0; i<JZLenght; i++)
+ 216   1          {
+ 217   2              TestData[i]=0x00;
+ 218   2          }
+ 219   1      }
+ 220          
+ 221          //´®¿Ú2ÏòÖ÷»ú·¢ËÍÔ¤²âµÄ¼ÆËãÖµ£¬½«´æ´¢ÔÚ½á¹¹ÌåÖÐµÄÊý¾ÝÈ«²¿·¢ËÍ¹ýÈ¥
+ 222          //´øºÍÐ£Ñé
+ 223          void USART2_SendPredictData()
+ 224          { 
+ 225   1         uint8 temp1;
+ 226   1         unsigned int Sum=0;
+ 227   1         USART2_SendBuff[0]=0x01;  //´Ó»úµØÖ·
+ 228   1          for(temp1=0;temp1<Numtrain;temp1++)
+ 229   1          { 
+ 230   2              USART2_SendBuff[temp1*3+1]=distance[temp1].label;  //Êý¾Ý´æÈë·¢ËÍ»º³åÇø
+ 231   2              USART2_SendBuff[temp1*3+2]=distance[temp1].distance>>8;  //¸ß8Î»
+ 232   2              USART2_SendBuff[temp1*3+3]=distance[temp1].distance;   //µÍ8Î»                   
+ 233   2          }
+ 234   1          for(temp1=0;temp1<Numtrain*3+1;temp1++)
+ 235   1          {
+ 236   2               Sum+=USART2_SendBuff[temp1];  //ÇóºÍ
+ 237   2          }
+ 238   1          USART2_SendBuff[Numtrain*3+1]=Sum>>8;  //¸ß8Î»
+ 239   1          USART2_SendBuff[Numtrain*3+2]=Sum;  //µÍ8Î» 
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:23 PAGE 5   
+
+ 240   1          
+ 241   1          for(temp1=0;temp1<Numtrain*3+3;temp1++)  
+ 242   1          {
+ 243   2             USART2_SendData(USART2_SendBuff[temp1]);  //·¢ËÍÊý¾Ý
+ 244   2          }
+ 245   1      }
+ 246          
+ 247          void main()        //Ö÷º¯Êý
+ 248          {
+ 249   1          uint8 ReceErrorCounter=0;  //´®¿Ú2·¢ËÍ´íÎó´ÎÊý¼ÆÊý£¬³¬¹ý2´Î·¢ËÍ´íÎóÔò²»ÔÚÖØ·¢Êý¾Ý
+ 250   1          //µÍÓÚ16MHzµÄÊ±ÖÓÆµÂÊÔÚ×ÔÐÐµ÷½ÚÊ±ÓÐÒ»¶¨µÄÎó²î
+ 251   1          //ÐèÒª½«Æäµ÷ÖÆÄ¿±êÆµÂÊµÄ2ÖÁ3±¶£¬È»ºóÔÙ½øÐÐ·ÖÆµ
+ 252   1          //ÕâÀïÊ®·ÖÖØÒª£¬·ñÔòÔÚ´®¿Ú¶øÍ¨Ñ¶µÄÊ±ºò»áµ¼ÖÂ²¨ÌØÂÊ²»×¼È´£¬È»ºó³öÏÖÂÒÂë
+ 253   1          P_SW2 = 0x80;
+ 254   1          CKSEL = 0x00; //Ñ¡ÔñÄÚ²¿ IRC ( Ä¬ÈÏ )
+ 255   1          CLKDIV = 0x02; //2·ÖÆµ
+ 256   1          P_SW2 = 0x00;
+ 257   1        
+ 258   1          USART1_Init();
+ 259   1          USART2_Init();
+ 260   1          Timer0_Init();
+ 261   1          while(1)
+ 262   1          {
+ 263   2              if(RecOverFlag==1)
+ 264   2              {             
+ 265   3                  prediction(1, TestData,train1);  //Ô¤²âÖµ¼ÆËã
+ 266   3                  LED = ~LED;
+ 267   3                  TR0=1; //¿ª¶¨Ê±Æ÷¼ÆÊ±
+ 268   3                  while(!USART2_AllowSendFlag);   //µÈ´ýÖ÷»ú´¦ÀíÍêÊý¾Ý    
+ 269   3                  USART2_SendPredictData();      //´®¿Ú2·¢ËÍÔ¤²âÖµ¼ÆËãµÄËùÓÐÊý¾Ý    
+ 270   3                  RecOverFlag=0;        //½ÓÊÕÍê³É±êÖ¾Çå³ý
+ 271   3                  ReceiveCounter=0;
+ 272   3                  ReceErrorCounter=0;  //´®¿Ú2·¢ËÍ´íÎó´ÎÊýÇå0
+ 273   3              }         
+ 274   2              if(USART2_RecOverFlag==1)  //´®¿Ú2½ÓÊÕÊý¾ÝÍê³É,ËµÃ÷·¢ËÍ¹ý³ÌÖÐÊý¾ÝÓÐ´í£¬ÔÙ·¢ËÍÒ»´Î²âÊÔÊý¾Ý
+ 275   2              {
+ 276   3                 USART1_SendData(0x01);  //´®¿Ú1ÏòÉÏÎ»»ú·´À¡ÐÅÏ¢£¬¸æÖªÉÏÎ»»ú£ºÁ½¸öµ¥Æ¬»úÊý¾Ý½»»¥Ê±Í¨Ñ¶ÓÐ¸ÉÈÅ£¬µ¼ÖÂÊý¾
+             -Ý·¢ËÍ´íÎó
+ 277   3                 USART1_SendData(0x88);  //Í¨Ñ¶´íÎó±êÖ¾
+ 278   3                 LED = ~LED;
+ 279   3                 if(USART2_RecBuff[0]==0x01&&USART2_RecBuff[1]==0x2C)  //ÉÏ´Î·¢ËÍÊý¾Ý´«Êä¹ý³ÌÖÐ³ö´í
+ 280   3                 {
+ 281   4                     ReceErrorCounter++;
+ 282   4                     if(ReceErrorCounter<3)  //·¢ËÍ´íÎó´ÎÊýÐ¡ÓÚ2´Î
+ 283   4                     {
+ 284   5                         
+ 285   5                         USART2_SendPredictData();  //Êý¾ÝÖØ·¢
+ 286   5                     }    
+ 287   4                 }
+ 288   3                 USART2_RecOverFlag=0;
+ 289   3                 USART2_ReceCount=0;           
+ 290   3              }         
+ 291   2          }
+ 292   1      }
+ 293          
+ 294          
+ 295          //´®¿Ú1ÖÐ¶Ï·þÎñ³ÌÐò
+ 296          void USART1_Handle(void) interrupt 4
+ 297          {
+ 298   1          if(RI)
+ 299   1          {
+ 300   2              TestData[ReceiveCounter++]=SBUF;
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:23 PAGE 6   
+
+ 301   2              //ÕâÀï²»ÓÃ¶¨Ê±Æ÷20ms×öÒ»Ö¡Êý¾Ý½áÊøµÄÅÐ¶Ï£¬ÄÇÑù×öÓÐBUG
+ 302   2              //ÒòÎªÒÑÖª´«ËÍÊý¾ÝµÄ³¤¶È£¬ËùÒÔÕâÀïÖ±½ÓÓÃ³¤¶ÈÀ´ÅÐ¶Ï
+ 303   2              if(ReceiveCounter>=JZLenght)  //´óÓÚµÈÓÚ1024£¬ËµÃ÷¾ØÕó´«ÊäÍê³É
+ 304   2              {
+ 305   3                 RecOverFlag=1;
+ 306   3              }
+ 307   2              RI=0;
+ 308   2          }
+ 309   1          if(TI)
+ 310   1          {
+ 311   2              TI=0;
+ 312   2              USART1_BUSY=0;
+ 313   2          }
+ 314   1      }
+ 315          
+ 316          
+ 317          //´®¿Ú2ÖÐ¶Ï·þÎñ³ÌÐò
+ 318          void  USART2_Handle(void) interrupt 8
+ 319          {
+ 320   1          if(S2CON & S2TI)  //·¢ËÍ±êÖ¾
+ 321   1          { 
+ 322   2              USART2_BUSY = 0;               //ÇåÃ¦±êÖ¾
+ 323   2              S2CON &= ~S2TI;         //Çå³ýS3TIÎ»
+ 324   2          }
+ 325   1          if(S2CON & S2RI)  //½ÓÊÕ±êÖ¾
+ 326   1          {     
+ 327   2              USART2_RecBuff[USART2_ReceCount++]=S2BUF;
+ 328   2              if(USART2_ReceCount>=USART2_ReceLenght)
+ 329   2              {
+ 330   3                 USART2_RecOverFlag=1;
+ 331   3                 USART2_ReceCount=0;
+ 332   3              }
+ 333   2              S2CON &= ~0x01;  //Çå³þ½ÓÊÕÖÐ¶Ï
+ 334   2          }   
+ 335   1      }
+ 336          //¶¨Ê±Æ÷0£¬ÓÃÓÚÑÓÊ±µÈ´ý´Ó»ú1Êý¾Ý´¦ÀíÍê³É£¬ÒÔÃâ2¸ö´Ó»úÍ¬Ê±·¢ËÍÊý¾ÝÔì³É³åÍ»
+ 337          void TIME0_Handle(void) interrupt 1
+ 338          {
+ 339   1          Timer0_Counter++;
+ 340   1          if(Timer0_Counter>=18)  //ÑÓÊ±900ms,µÈ´ýÖ÷»ú´¦ÀíÍêÊý¾Ý
+ 341   1          {    
+ 342   2             TR0=0;
+ 343   2             LED = ~LED;
+ 344   2             Timer0_Counter=0;
+ 345   2             USART2_AllowSendFlag=1;  //´®¿Ú2ÔÊÐí·¢ËÍÊý¾ÝÁË
+ 346   2          }     
+ 347   1      }
+ 348          
+ 349          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1286    ----
+   CONSTANT SIZE    =  30750    ----
+   XDATA SIZE       =   1115    ----
+   PDATA SIZE       =    102      43
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

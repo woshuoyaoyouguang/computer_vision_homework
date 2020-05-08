@@ -1,0 +1,448 @@
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: F:\keil5\C51\BIN\C51.EXE main.c COMPACT RTX51 OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Public) DEBUG OBJE
+                    -CTEXTEND TABS(2)
+
+line level    source
+
+   1          /*基于51单片机的KNN算法的实现*/
+   2          /*基于51单片机的KNN算法的实现*/
+   3          /*基于51单片机的KNN算法的实现*/
+   4          /*基于51单片机的KNN算法的实现*/
+   5          #include "STC8A.h"
+   6          #include "KNN.h"
+   7          #include "train.h"
+   8          #define USART2_ReceLenght  93    //串口2接收数据长度
+   9          
+  10          //注意xdata定义的数据能够掉电保持，并且单片机复位后并不会复位xdata区的数据
+  11          //RAM区上电后初始值是随机的，需要重新自己赋初值
+  12          char xdata TestData[JZLenght+1];  //接收测试数据暂存，有时候矩阵会多一个数据成1025字节
+  13          unsigned char xdata USART2_RecBuff[USART2_ReceLenght];
+  14          
+  15          uint8 code SmgDuan[11]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0xf3};
+  16          uint8 code SmgWaitDuan[6]={0x01,0x02,0x04,0x08,0x10,0x20};
+  17          //串口1数据接受完成标志以及接收数据的计数
+  18          int ReceiveCounter=0;
+  19          uint8 RecOverFlag=0;
+  20          int Timer0_Counter=0;  //定时器计数
+  21          
+  22          sbit LED = P2^6;  //LED指示灯
+  23          sbit USART2_AllowSendPort=P1^3;
+  24          
+  25          bit USART1_BUSY;   //串口1繁忙标志
+  26          bit USART2_BUSY;   //串口2繁忙标志
+  27          bit SmgWait=0;
+  28          uint8 SmgCounter=0;
+  29          //串口2数据接受完成标志以及接收数据的计数
+  30          uint8 USART2_RecOverFlag=0;
+  31          uint8 USART2_ReceCount=0;
+  32          
+  33          
+  34          //该存储区是固定的，不能乱改，否则代码运行结果不正确
+  35          Distance xdata distance[AllNumtrain]; //距离值暂存,所有单片机计算结果的汇总
+  36          
+  37          void exchange(Distance *in, uint8 index1,uint8 index2);
+  38          void selectSort(Distance *in, uint8 length);
+  39          void USART1_SendData(char Data);
+  40          //128 字节内部直接访问 RAM（DATA）
+  41          //128 字节内部间接访问 RAM（IDATA）
+  42          //8192 字节内部扩展 RAM（内部 XDATA）
+  43          //外部最大可扩展 64K 字节 RAM（外部 XDATA）
+  44          
+  45          
+  46          
+  47          void USART1_SendData(uint8 Data)
+  48          {
+  49   1          while (USART1_BUSY);
+  50   1          USART1_BUSY = 1;
+  51   1          SBUF = Data;
+  52   1      }
+  53          
+  54          void USART1_SendStr(uint8 *Data,int Lenght)
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 2   
+
+  55          {
+  56   1          int i;
+  57   1          for(i=0; i<Lenght; i++)
+  58   1          {
+  59   2              USART1_SendData(Data[i]);
+  60   2          }
+  61   1      }
+  62          
+  63          
+  64          //串口2发送数据
+  65          void USART2_SendData(uint8 Data)
+  66          {
+  67   1          while (USART2_BUSY);
+  68   1          USART2_BUSY = 1;
+  69   1          S2BUF = Data;
+  70   1      }
+  71          
+  72          //串口2发送字符串
+  73          void USART2_SendStr(uint8 *USARTData,int Lenght)
+  74          {
+  75   1          int j=0;
+  76   1          for(j=0; j<Lenght; j++)
+  77   1          {
+  78   2              USART2_SendData(USARTData[j]);
+  79   2          }
+  80   1      }
+  81          //求欧式距离
+  82          //digit1 测试数据
+  83          //digit2 训练数据
+  84          //返回值:int类型
+  85          int calDistance(char *digit1, char *digit2)
+  86          /*求距离*/
+  87          {
+  88   1          int i, squareSum=0.0;
+  89   1          for(i=0; i<JZLenght; i++)
+  90   1          {
+  91   2              //该处这样做的目的是提高运算速度，因为训练数据标本中只有0和1
+  92   2              //所以这种算法处理只适用于标本是0和1的训练数据
+  93   2              if(digit1[i]-digit2[i]!=0) squareSum+=1;
+  94   2          }
+  95   1      //    USART1_SendDataUint8(squareSum>>8);   //串口调试
+  96   1      //    USART1_SendDataUint8(squareSum);
+  97   1          return  squareSum;  //返回距离值
+  98   1      }
+  99          
+ 100          //输入in 一个结构体数组
+ 101          //index1 结构体数组的索引，前一个数
+ 102          //index2 结构体数组的索引，后一个数
+ 103          //两个结构体互换
+ 104          void exchange(Distance *in, uint8 index1,uint8 index2)
+ 105          {
+ 106   1          Distance tmp;
+ 107   1          tmp = in[index1];
+ 108   1          in[index1] = in[index2];
+ 109   1          in[index2] = tmp;
+ 110   1      }
+ 111          
+ 112          
+ 113          //输入in  一个结构体数组
+ 114          //lenght 训练数据模板数量
+ 115          //从小到大排序
+ 116          void selectSort(Distance *in, uint8 length)
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 3   
+
+ 117          {
+ 118   1          uint8 i, j, min;
+ 119   1          uint8 N = length;
+ 120   1          for(i=0; i<N-1; i++)
+ 121   1          {
+ 122   2              min = i;
+ 123   2              //j=i+1 即该数据后面的数据
+ 124   2              //算法思想:每次循环将比较小数据往前推一次，直到所有数据排序正确
+ 125   2              //先判断前一个数据是否大于后一个数据，如果大于则交换，不大与则不交换
+ 126   2              //最大i*j次可完成排序
+ 127   2              for(j=i+1; j<N; j++)
+ 128   2              {
+ 129   3                  if(in[j].distance<in[min].distance) min = j;
+ 130   3              }
+ 131   2              exchange(in,i,min);
+ 132   2          }
+ 133   1      }
+ 134          
+ 135          //in  输入数据矩阵
+ 136          //train 测试数据矩阵
+ 137          //K 选出距离目标值最近的数据的个数
+ 138          //二维数组作为参数传入的时候长度没有加1，导致数据标签全是0
+ 139          //因为数据标签存储在第1025个字节
+ 140          void prediction(uint8 K, char *in, char train[][JZLenght+1])
+ 141          {
+ 142   1          int i, it;
+ 143   1          int predict = 0;
+ 144   1      //   Distance distance[Numtrain]; //距离值暂存,Numtrain训练数据模板长度
+ 145   1          /*求取输入digit与训练数据的距离*/
+ 146   1          //主机数据存储在下标0-18中
+ 147   1          for(it=0; it<Numtrain; it++)
+ 148   1          {
+ 149   2              distance[it].distance = calDistance(in,train[it]);  //求测试数据与训练数据的距离
+ 150   2              distance[it].label = train[it][JZLenght];  //训练数据的数字编号存放于数组最后一个数据字节中     
+ 151   2          }
+ 152   1          
+ 153   1      }
+*** WARNING C280 IN LINE 140 OF main.c: 'K': unreferenced local variable
+*** WARNING C280 IN LINE 142 OF main.c: 'i': unreferenced local variable
+ 154          void USART1_Init()
+ 155          {
+ 156   1          //初次赋值最好别用或运算，有BUG
+ 157   1          //这里不知道是什么原因,可能是芯片上的一个缺陷
+ 158   1          SCON=0x50;        //REN=1允许串行接受状态，串口工作模式1,9位可变波特率
+ 159   1          TMOD = 0x00;       //定时器1为模式0（16位自动重载)
+ 160   1          AUXR=0X40;     //定时器1开启1T模式
+ 161   1          //9600波特率，注意波特率不能设置太高，之前测试的时候115200波特率的时候有乱码
+ 162   1          TL1=(65536-(11059200/4/9600));    //设置波特率重装值
+ 163   1          TH1=(65536-(11059200/4/9600))>>16;
+ 164   1      
+ 165   1          //串口1的发送口设置为推挽输出,手册上有说，这里最好是设置一下
+ 166   1          //不设置的话虽然也能正常发送，但是按STC手册上的来吧，要不然又会有坑
+ 167   1          P3M1 &= ~0x02;
+ 168   1          P3M0 |=  0x02;  
+ 169   1        
+ 170   1          TR1  = 1;        //开启定时器1,,作为波特率发生器
+ 171   1          ES   = 1;        //开串口中断
+ 172   1          EA   = 1;        // 开总中断
+ 173   1      
+ 174   1          USART1_BUSY=0;   //串口1忙标志初始状态为0
+ 175   1      }
+ 176          
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 4   
+
+ 177          void USART2_Init()
+ 178          {
+ 179   1          S2CON = 0x50;   //模式0,8位可变波特率,允许串口接受数据
+ 180   1          T2L = (65536-(11059200/4/9600));   //设置定时器2初值，用于波特率发生器，该值决定波特率
+ 181   1          T2H = (65536-(11059200/4/9600))>>8;
+ 182   1          AUXR |= 0x14;   //开定时器2,时钟为1T模式，作为波特率发生器
+ 183   1          IE2 = 0x01;  //开启串口2的中断
+ 184   1          EA=1;
+ 185   1      
+ 186   1      
+ 187   1      
+ 188   1          P1M1 &= ~0x01;   //P1.0 串口接收口设置成双向口
+ 189   1          P1M0 &= ~0x01;
+ 190   1          
+ 191   1          P1M1 &= ~0x02;
+ 192   1          P1M0 |=  0x02;    //P1.1发送数据前设置成推挽输出    
+ 193   1        
+ 194   1          USART2_BUSY=0;   //串口1忙标志初始状态为0
+ 195   1      }
+ 196          void Clearn_TestData()
+ 197          {
+ 198   1          int i;
+ 199   1          for(i=0; i<JZLenght; i++)
+ 200   1          {
+ 201   2              TestData[i]=0x00;
+ 202   2          }
+ 203   1      }
+ 204          
+ 205          //串口2接收数据的和校验
+ 206          uint8 USART2_ReceSumCheck()
+ 207          { 
+ 208   1          uint8 temp;
+ 209   1          uint8 Hbyte=0,Lbyte=0;
+ 210   1          unsigned int Sum=0;
+ 211   1          for(temp=0;temp<USART2_ReceLenght-2;temp++)
+ 212   1          {
+ 213   2              Sum+=USART2_RecBuff[temp];  //和校验
+ 214   2          }
+ 215   1          
+ 216   1      //    for(temp=0;temp<USART2_ReceLenght;temp++)  //串口调试输出
+ 217   1      //    {
+ 218   1      //        USART1_SendData(USART2_RecBuff[temp]);
+ 219   1      //    }
+ 220   1      //    //和校验判断,高8位在前，低8位在后
+ 221   1      //    USART1_SendData(Sum>>8);
+ 222   1      //    USART1_SendData(Sum);
+ 223   1          
+ 224   1          
+ 225   1          Hbyte=Sum>>8;  //高字节,这里要先做运算再用该值去判断
+ 226   1          Lbyte=Sum;   //低字节
+ 227   1          if((Hbyte==USART2_RecBuff[USART2_ReceLenght-2])&&(USART2_RecBuff[USART2_ReceLenght-1]==Lbyte))
+ 228   1          {
+ 229   2              LED=~LED;
+ 230   2              return 1;  //和校验正确
+ 231   2          }
+ 232   1          return 0;   //和校验错误
+ 233   1      }
+ 234          
+ 235          void Timer0_Init(void)
+ 236          {
+ 237   1          AUXR &= ~0x80;  //定时器时钟12T模式,即时钟12分频(FOSC/12)
+ 238   1          TMOD |= 0x00;  //模式0,16位自动重装载
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 5   
+
+ 239   1          TL0 = 0x00;   //设置定时初值
+ 240   1          TH0 = 0x4C;   //设置定时初值
+ 241   1          TF0 = 0;    //清除TF0标志
+ 242   1          TR0 = 0;    //初始化时关闭定时器
+ 243   1          ET0 = 1;      //使能定时器中断
+ 244   1          EA = 1;
+ 245   1      }
+ 246          void main()        //主函数
+ 247          {
+ 248   1          uint8 temp1,temp2,temp3,temp4;
+ 249   1          int DistanceTemp;
+ 250   1          bit HostRelady=0,Slave1Relady=0;  //各机数据处理完成标志位
+ 251   1          uint8 USART2_ReceDataErrorCounter=0;
+ 252   1          uint8 HostPredictFlag=0;
+ 253   1          //低于16MHz的时钟频率在自行调节时有一定的误差
+ 254   1          //需要将其调制目标频率的2至3倍，然后再进行分频
+ 255   1          //这里十分重要，否则在串口而通讯的时候会导致波特率不准却，然后出现乱码
+ 256   1          //这里使用ISP软件先将频率调至22.184MHz,再进行分频
+ 257   1          P_SW2 = 0x80;
+ 258   1          CKSEL = 0x00; //选择内部 IRC ( 默认 )
+ 259   1          CLKDIV = 0x02; //2分频
+ 260   1          P_SW2 = 0x00;
+ 261   1          
+ 262   1        
+ 263   1          USART1_Init();
+ 264   1          USART2_Init();
+ 265   1          Timer0_Init();
+ 266   1          P0M1 &= ~0xFF;
+ 267   1          P0M0 =  0xFF;    //P0口设置成强推挽输出,用于驱动数码管
+ 268   1          P0=SmgDuan[10]; 
+ 269   1          TR0=1;  //开定时器
+ 270   1          SmgWait=1;  //数码管动态流水显示
+ 271   1          while(1)
+ 272   1          {
+ 273   2              if(RecOverFlag==1)
+ 274   2              {   
+ 275   3      //            P0=SmgDuan[10];
+ 276   3                  SmgWait=1;  //数码管动态流水显示  
+ 277   3                  TR0=1;  //开定时器          
+ 278   3                  prediction(1, TestData,train1);  //主机计算距离值
+ 279   3                                  
+ 280   3                  HostRelady=1;  //主机数据处理完成标志           
+ 281   3                  RecOverFlag=0;      
+ 282   3                  ReceiveCounter=0;
+ 283   3                  USART2_ReceDataErrorCounter=0;
+ 284   3                  LED=~LED;  //接收到数据，状态取反一次
+ 285   3                  USART2_AllowSendPort=0; //让从机1准备发送数据
+ 286   3              }
+ 287   2              if(USART2_RecOverFlag==1)  //从机1发过来的计算数据
+ 288   2              {           
+ 289   3                    if(USART2_ReceSumCheck()==1)
+ 290   3                    {
+ 291   4                          if(USART2_RecBuff[0]==0x01)  //从机1发过来的数据
+ 292   4                          {
+ 293   5                              for(temp1=Numtrain;temp1<AllNumtrain;temp1++)
+ 294   5                              {
+ 295   6                                 DistanceTemp=0x0000;
+ 296   6                                 distance[temp1].label = USART2_RecBuff[(temp1-Numtrain)*3+1];
+ 297   6                                 DistanceTemp|=USART2_RecBuff[(temp1-Numtrain)*3+2]<<8;  //高8位
+ 298   6                                 DistanceTemp|=USART2_RecBuff[(temp1-Numtrain)*3+3];  //低8位
+ 299   6                                 distance[temp1].distance = DistanceTemp;                      
+ 300   6                              }
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 6   
+
+ 301   5                              LED=~LED;  //接收到数据，状态取反一次
+ 302   5                              Slave1Relady=1;  //从机1数据处理完成标志
+ 303   5                              USART2_AllowSendPort=1;  //从机1数据处理完毕，禁止再发数据
+ 304   5                          }                                   
+ 305   4                    }
+ 306   3                    else
+ 307   3                    {
+ 308   4                       USART2_ReceDataErrorCounter++;
+ 309   4                       if(USART2_ReceDataErrorCounter<3)
+ 310   4                       {
+ 311   5                           //和校验错误，回复从机，要求再次发送
+ 312   5                           USART2_SendData(0x01);  //发送从机地址
+ 313   5                           USART2_SendData(0x2C);  //发送和校验错误
+ 314   5                       }
+ 315   4                       else
+ 316   4                       {
+ 317   5                          HostPredictFlag=1;   //达到最大重发次数，则不再重发，此时以主机的预测结果为主
+ 318   5                          USART2_AllowSendPort=1;  //从机1数据处理完毕，禁止再发数据
+ 319   5                       }
+ 320   4                    }
+ 321   3                  USART2_RecOverFlag=0;  //清除串口2的接收完成标志
+ 322   3                  USART2_ReceCount=0;  //清除串口2的计数          
+ 323   3              }
+ 324   2              
+ 325   2              if(HostRelady==1&&Slave1Relady==1)  //各机的数据处理完毕
+ 326   2              {   
+ 327   3                  TR0=0;  //开定时器          
+ 328   3                  SmgWait=0;  //数码管动态流水显示          
+ 329   3                  selectSort(distance, AllNumtrain);  //对距离值数组进行排序  
+ 330   3                  P0=SmgDuan[distance[0].label];   //数码管显示预测结果
+ 331   3                  HostRelady=0;
+ 332   3                  Slave1Relady=0;
+ 333   3                  LED=~LED;    //处理完数据，状态取反一次     
+ 334   3              }
+ 335   2              if(HostPredictFlag==1)  //通讯故障，此时以主机的一个预测为准
+ 336   2              {
+ 337   3                  selectSort(distance, Numtrain);  //对距离值数组进行排序 
+ 338   3                  P0=SmgDuan[distance[0].label];   //数码管显示预测结果       
+ 339   3                  HostPredictFlag=0;
+ 340   3                  HostRelady=0;
+ 341   3                  Slave1Relady=0;
+ 342   3                  LED=~LED;       
+ 343   3              }
+ 344   2      
+ 345   2          }
+ 346   1      }
+*** WARNING C280 IN LINE 248 OF main.c: 'temp2': unreferenced local variable
+*** WARNING C280 IN LINE 248 OF main.c: 'temp3': unreferenced local variable
+*** WARNING C280 IN LINE 248 OF main.c: 'temp4': unreferenced local variable
+ 347          
+ 348          
+ 349          //串口1中断服务程序
+ 350          void USART1_Handle(void) interrupt 4
+ 351          {
+ 352   1          if(RI)
+ 353   1          {
+ 354   2              TestData[ReceiveCounter++]=SBUF;
+ 355   2              //这里不用定时器20ms做一帧数据结束的判断，那样做有BUG
+ 356   2              //因为已知传送数据的长度，所以这里直接用长度来判断
+ 357   2              if(ReceiveCounter>=JZLenght)  //大于等于1024，说明矩阵传输完成
+ 358   2              {
+ 359   3                 RecOverFlag=1;
+C51 COMPILER V9.55   MAIN                                                                  05/08/2020 19:28:16 PAGE 7   
+
+ 360   3                 ReceiveCounter=0;
+ 361   3              }
+ 362   2              RI=0;
+ 363   2          }
+ 364   1          if(TI)
+ 365   1          {
+ 366   2              TI=0;
+ 367   2              USART1_BUSY=0;
+ 368   2          }
+ 369   1      }
+ 370          
+ 371          
+ 372          //串口2中断服务程序
+ 373          void  USART2_Handle(void) interrupt 8
+ 374          {
+ 375   1          if(S2CON & S2TI)  //发送标志
+ 376   1          { 
+ 377   2              USART2_BUSY = 0;               //清忙标志
+ 378   2              S2CON &= ~S2TI;         //清除S3TI位
+ 379   2          }
+ 380   1          if(S2CON & S2RI)  //接收标志
+ 381   1          {     
+ 382   2              USART2_RecBuff[USART2_ReceCount++]=S2BUF;
+ 383   2              if(USART2_ReceCount>=USART2_ReceLenght)
+ 384   2              {
+ 385   3                 USART2_RecOverFlag=1;  //数据接收完成标志
+ 386   3                 USART2_ReceCount=0;  //清除串口2的计数
+ 387   3              }
+ 388   2              S2CON &= ~0x01;  //清楚接收中断
+ 389   2          }   
+ 390   1      }
+ 391          
+ 392          //定时器0，用于延时等待从机1数据处理完成，以免2个从机同时发送数据造成冲突
+ 393          void TIME0_Handle(void) interrupt 1
+ 394          {
+ 395   1          Timer0_Counter++;
+ 396   1          if(Timer0_Counter>=2&&SmgWait)  //延时100ms,等待主机处理完数据
+ 397   1          {    
+ 398   2             P0=SmgWaitDuan[SmgCounter];
+ 399   2             SmgCounter++;
+ 400   2             if(SmgCounter>5)
+ 401   2             {
+ 402   3                SmgCounter=0;
+ 403   3             }
+ 404   2             Timer0_Counter=0;
+ 405   2          }     
+ 406   1      }
+ 407          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1506    ----
+   CONSTANT SIZE    =  27692    ----
+   XDATA SIZE       =   1289    ----
+   PDATA SIZE       =      8      53
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  5 WARNING(S),  0 ERROR(S)

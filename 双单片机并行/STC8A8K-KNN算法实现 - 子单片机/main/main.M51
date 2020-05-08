@@ -1,0 +1,536 @@
+BL51 BANKED LINKER/LOCATER V6.22                                                        05/08/2020  19:28:24  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
+F:\KEIL5\C51\BIN\BL51.EXE main.obj TO main RAMSIZE (256)
+
+
+MEMORY MODEL: COMPACT
+
+
+INPUT MODULES INCLUDED:
+  main.obj (MAIN)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C_STARTUP)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C?COPY)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C?CLDOPTR)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C?IMUL)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C?ILDOPTR)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C?OFFXADD)
+  F:\KEIL5\C51\LIB\C51C.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  main (MAIN)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+                    0008H     0018H                  *** GAP ***
+            BIT     0020H.0   0000H.3   UNIT         ?BI?MAIN
+                    0020H.3   0000H.5                *** GAP ***
+            IDATA   0021H     0001H     UNIT         ?STACK
+
+            * * * * * * *  X D A T A   M E M O R Y  * * * * * * *
+            XDATA   0000H     0005H     INPAGE       ?PD?_USART1_SENDSTR?MAIN
+            XDATA   0005H     0005H     INPAGE       ?PD?_USART2_SENDSTR?MAIN
+            XDATA   000AH     0008H     INPAGE       ?PD?_EXCHANGE?MAIN
+            XDATA   0012H     0007H     INPAGE       ?PD?_SELECTSORT?MAIN
+            XDATA   0019H     0066H     INPAGE       ?PD?MAIN
+            XDATA   007FH     0012H     INPAGE       _PDATA_GROUP_
+            XDATA   0091H     045BH     UNIT         ?XD?MAIN
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     0008H     UNIT         ?PR?_USART1_SENDDATA?MAIN
+            CODE    000BH     0003H     ABSOLUTE     
+            CODE    000EH     0014H     UNIT         ?C_INITSEG
+                    0022H     0001H                  *** GAP ***
+            CODE    0023H     0003H     ABSOLUTE     
+            CODE    0026H     0012H     UNIT         ?PR?TIMER0_INIT?MAIN
+            CODE    0038H     0008H     UNIT         ?PR?_USART2_SENDDATA?MAIN
+                    0040H     0003H                  *** GAP ***
+            CODE    0043H     0003H     ABSOLUTE     
+            CODE    0046H     781EH     UNIT         ?CO?MAIN
+            CODE    7864H     0179H     UNIT         ?C?LIB_CODE
+            CODE    79DDH     00B8H     UNIT         ?PR?_PREDICTION?MAIN
+            CODE    7A95H     0093H     UNIT         ?PR?_EXCHANGE?MAIN
+            CODE    7B28H     0093H     UNIT         ?PR?_SELECTSORT?MAIN
+            CODE    7BBBH     008CH     UNIT         ?C_C51STARTUP
+            CODE    7C47H     0089H     UNIT         ?PR?USART2_SENDPREDICTDATA?MAIN
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 2
+
+
+            CODE    7CD0H     0084H     UNIT         ?PR?MAIN?MAIN
+            CODE    7D54H     0059H     UNIT         ?PR?_CALDISTANCE?MAIN
+            CODE    7DADH     0054H     UNIT         ?PR?USART1_HANDLE?MAIN
+            CODE    7E01H     0044H     UNIT         ?PR?USART2_HANDLE?MAIN
+            CODE    7E45H     0042H     UNIT         ?PR?_USART1_SENDSTR?MAIN
+            CODE    7E87H     0042H     UNIT         ?PR?_USART2_SENDSTR?MAIN
+            CODE    7EC9H     0032H     UNIT         ?PR?TIME0_HANDLE?MAIN
+            CODE    7EFBH     0023H     UNIT         ?PR?USART1_INIT?MAIN
+            CODE    7F1EH     0020H     UNIT         ?PR?USART2_INIT?MAIN
+            CODE    7F3EH     000FH     UNIT         ?PR?CLEARN_TESTDATA?MAIN
+
+
+
+OVERLAY MAP OF MODULE:   main (MAIN)
+
+
+SEGMENT                                   PDATA_GROUP
+  +--> CALLED SEGMENT                   START    LENGTH
+-------------------------------------------------------
+?C_C51STARTUP                           -----    -----
+  +--> ?PR?MAIN?MAIN
+  +--> ?C_INITSEG
+
+?PR?MAIN?MAIN                           007FH    0001H
+  +--> ?PR?USART1_INIT?MAIN
+  +--> ?PR?USART2_INIT?MAIN
+  +--> ?PR?TIMER0_INIT?MAIN
+  +--> ?CO?MAIN
+  +--> ?PR?_PREDICTION?MAIN
+  +--> ?PR?USART2_SENDPREDICTDATA?MAIN
+  +--> ?PR?_USART1_SENDDATA?MAIN
+
+?PR?_PREDICTION?MAIN                    0080H    0009H
+  +--> ?PR?_CALDISTANCE?MAIN
+
+?PR?_CALDISTANCE?MAIN                   0089H    0008H
+
+?PR?USART2_SENDPREDICTDATA?MAIN         -----    -----
+  +--> ?PR?_USART2_SENDDATA?MAIN
+
+
+
+SYMBOL TABLE OF MODULE:  main (MAIN)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        MAIN
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0092H         PUBLIC        P1M0
+  D:0091H         PUBLIC        P1M1
+  D:0080H         PUBLIC        P0
+  D:00B2H         PUBLIC        P3M0
+  D:0090H         PUBLIC        P1
+  D:00B1H         PUBLIC        P3M1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 3
+
+
+  D:00C0H         PUBLIC        P4
+  D:00C8H         PUBLIC        P5
+  B:00A8H.7       PUBLIC        EA
+  D:00E8H         PUBLIC        P6
+  D:00F8H         PUBLIC        P7
+  D:00BAH         PUBLIC        P_SW2
+  D:00A8H         PUBLIC        IE
+  C:7EC9H         PUBLIC        TIME0_Handle
+  B:00A8H.4       PUBLIC        ES
+  D:00B8H         PUBLIC        IP
+  B:0098H.0       PUBLIC        RI
+  B:0098H.1       PUBLIC        TI
+  X:0091H         PUBLIC        TestData
+  D:00D8H         PUBLIC        CCON
+  C:7CD0H         PUBLIC        main
+  C:0026H         PUBLIC        Timer0_Init
+  C:0003H         PUBLIC        _USART1_SendData
+  C:0038H         PUBLIC        _USART2_SendData
+  X:0019H         PUBLIC        ReceiveCounter
+  C:7B28H         PUBLIC        _selectSort
+  B:0020H.0       PUBLIC        USART2_AllowSendFlag
+  D:0099H         PUBLIC        SBUF
+  X:001BH         PUBLIC        USART2_ReceCount
+  D:0098H         PUBLIC        SCON
+  D:0089H         PUBLIC        TMOD
+  D:0088H         PUBLIC        TCON
+  X:001CH         PUBLIC        USART2_SendBuff
+  X:0079H         PUBLIC        RecOverFlag
+  C:79DDH         PUBLIC        _prediction
+  C:7EFBH         PUBLIC        USART1_Init
+  C:7F1EH         PUBLIC        USART2_Init
+  D:00AFH         PUBLIC        IE2
+  D:008EH         PUBLIC        AUXR
+  X:007AH         PUBLIC        USART2_RecBuff
+  C:7A95H         PUBLIC        _exchange
+  B:00A8H.1       PUBLIC        ET0
+  B:0088H.5       PUBLIC        TF0
+  D:008CH         PUBLIC        TH0
+  D:008DH         PUBLIC        TH1
+  D:00D6H         PUBLIC        T2H
+  X:0492H         PUBLIC        distance
+  D:008AH         PUBLIC        TL0
+  D:008BH         PUBLIC        TL1
+  C:0046H         PUBLIC        train1
+  D:00D7H         PUBLIC        T2L
+  B:00A0H.6       PUBLIC        LED
+  B:0088H.4       PUBLIC        TR0
+  B:0088H.6       PUBLIC        TR1
+  C:7F3EH         PUBLIC        Clearn_TestData
+  X:007CH         PUBLIC        USART2_RecOverFlag
+  C:7D54H         PUBLIC        _calDistance
+  D:009BH         PUBLIC        S2BUF
+  D:009AH         PUBLIC        S2CON
+  B:0020H.1       PUBLIC        USART1_BUSY
+  B:0020H.2       PUBLIC        USART2_BUSY
+  C:7E45H         PUBLIC        _USART1_SendStr
+  C:7E87H         PUBLIC        _USART2_SendStr
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 4
+
+
+  C:7DADH         PUBLIC        USART1_Handle
+  C:7E01H         PUBLIC        USART2_Handle
+  X:007DH         PUBLIC        Timer0_Counter
+  D:00D0H         PUBLIC        PSW
+  C:7C47H         PUBLIC        USART2_SendPredictData
+  -------         PROC          _USART1_SENDDATA
+  D:0007H         SYMBOL        Data
+  C:0003H         LINE#         47
+  C:0003H         LINE#         48
+  C:0003H         LINE#         49
+  C:0006H         LINE#         50
+  C:0008H         LINE#         51
+  C:000AH         LINE#         52
+  -------         ENDPROC       _USART1_SENDDATA
+  -------         PROC          _USART1_SENDSTR
+  X:0000H         SYMBOL        Data
+  X:0003H         SYMBOL        Lenght
+  -------         DO            
+  D:0004H         SYMBOL        i
+  -------         ENDDO         
+  C:7E45H         LINE#         56
+  C:7E55H         LINE#         57
+  C:7E55H         LINE#         59
+  C:7E6AH         LINE#         60
+  C:7E6AH         LINE#         61
+  C:7E7FH         LINE#         62
+  C:7E86H         LINE#         63
+  -------         ENDPROC       _USART1_SENDSTR
+  -------         PROC          _USART2_SENDDATA
+  D:0007H         SYMBOL        Data
+  C:0038H         LINE#         67
+  C:0038H         LINE#         68
+  C:0038H         LINE#         69
+  C:003BH         LINE#         70
+  C:003DH         LINE#         71
+  C:003FH         LINE#         72
+  -------         ENDPROC       _USART2_SENDDATA
+  -------         PROC          _USART2_SENDSTR
+  X:0005H         SYMBOL        USARTData
+  X:0008H         SYMBOL        Lenght
+  -------         DO            
+  D:0004H         SYMBOL        j
+  -------         ENDDO         
+  C:7E87H         LINE#         75
+  C:7E97H         LINE#         76
+  C:7E97H         LINE#         77
+  C:7E9AH         LINE#         78
+  C:7EACH         LINE#         79
+  C:7EACH         LINE#         80
+  C:7EC1H         LINE#         81
+  C:7EC8H         LINE#         82
+  -------         ENDPROC       _USART2_SENDSTR
+  -------         PROC          _CALDISTANCE
+  X:0089H         SYMBOL        digit1
+  X:008CH         SYMBOL        digit2
+  -------         DO            
+  D:0006H         SYMBOL        i
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 5
+
+
+  X:008FH         SYMBOL        squareSum
+  -------         ENDDO         
+  C:7D54H         LINE#         87
+  C:7D5EH         LINE#         89
+  C:7D5EH         LINE#         90
+  C:7D64H         LINE#         91
+  C:7D66H         LINE#         92
+  C:7D66H         LINE#         95
+  C:7D98H         LINE#         96
+  C:7DA5H         LINE#         97
+  C:7DACH         LINE#         98
+  -------         ENDPROC       _CALDISTANCE
+  -------         PROC          _EXCHANGE
+  X:000AH         SYMBOL        in
+  X:000DH         SYMBOL        index1
+  X:000EH         SYMBOL        index2
+  -------         DO            
+  X:000FH         SYMBOL        tmp
+  -------         ENDDO         
+  C:7A95H         LINE#         104
+  C:7AA3H         LINE#         105
+  C:7AA3H         LINE#         107
+  C:7ABCH         LINE#         108
+  C:7B00H         LINE#         109
+  -------         ENDPROC       _EXCHANGE
+  -------         PROC          _SELECTSORT
+  X:0012H         SYMBOL        in
+  D:0005H         SYMBOL        length
+  -------         DO            
+  X:0015H         SYMBOL        i
+  X:0016H         SYMBOL        j
+  X:0017H         SYMBOL        min
+  X:0018H         SYMBOL        N
+  -------         ENDDO         
+  C:7B28H         LINE#         116
+  C:7B32H         LINE#         117
+  C:7B32H         LINE#         119
+  C:7B36H         LINE#         120
+  C:7B46H         LINE#         121
+  C:7B46H         LINE#         122
+  C:7B4BH         LINE#         127
+  C:7B5BH         LINE#         128
+  C:7B5BH         LINE#         129
+  C:7B96H         LINE#         130
+  C:7B9DH         LINE#         131
+  C:7BB3H         LINE#         132
+  C:7BBAH         LINE#         133
+  -------         ENDPROC       _SELECTSORT
+  -------         PROC          _PREDICTION
+  X:0080H         SYMBOL        K
+  X:0081H         SYMBOL        in
+  X:0084H         SYMBOL        train
+  -------         DO            
+  X:0087H         SYMBOL        it
+  -------         ENDDO         
+  C:79DDH         LINE#         140
+  C:79EAH         LINE#         141
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 6
+
+
+  C:79EAH         LINE#         144
+  C:7A04H         LINE#         145
+  C:7A04H         LINE#         146
+  C:7A52H         LINE#         147
+  C:7A88H         LINE#         148
+  C:7A94H         LINE#         149
+  -------         ENDPROC       _PREDICTION
+  -------         PROC          USART1_INIT
+  C:7EFBH         LINE#         151
+  C:7EFBH         LINE#         152
+  C:7EFBH         LINE#         155
+  C:7EFEH         LINE#         156
+  C:7F01H         LINE#         157
+  C:7F04H         LINE#         159
+  C:7F07H         LINE#         160
+  C:7F09H         LINE#         166
+  C:7F0CH         LINE#         167
+  C:7F0FH         LINE#         169
+  C:7F12H         LINE#         170
+  C:7F15H         LINE#         172
+  C:7F17H         LINE#         173
+  C:7F19H         LINE#         174
+  C:7F1BH         LINE#         176
+  C:7F1DH         LINE#         177
+  -------         ENDPROC       USART1_INIT
+  -------         PROC          USART2_INIT
+  C:7F1EH         LINE#         179
+  C:7F1EH         LINE#         180
+  C:7F1EH         LINE#         181
+  C:7F21H         LINE#         182
+  C:7F24H         LINE#         183
+  C:7F27H         LINE#         184
+  C:7F2AH         LINE#         185
+  C:7F2DH         LINE#         186
+  C:7F2FH         LINE#         191
+  C:7F32H         LINE#         192
+  C:7F35H         LINE#         194
+  C:7F38H         LINE#         195
+  C:7F3BH         LINE#         197
+  C:7F3DH         LINE#         198
+  -------         ENDPROC       USART2_INIT
+  -------         PROC          TIMER0_INIT
+  C:0026H         LINE#         200
+  C:0026H         LINE#         201
+  C:0026H         LINE#         202
+  C:0029H         LINE#         203
+  C:0029H         LINE#         204
+  C:002CH         LINE#         205
+  C:002FH         LINE#         206
+  C:0031H         LINE#         207
+  C:0033H         LINE#         208
+  C:0035H         LINE#         209
+  C:0037H         LINE#         210
+  -------         ENDPROC       TIMER0_INIT
+  -------         PROC          CLEARN_TESTDATA
+  -------         DO            
+  D:0006H         SYMBOL        i
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 7
+
+
+  -------         ENDDO         
+  C:7F3EH         LINE#         212
+  C:7F3EH         LINE#         213
+  C:7F3EH         LINE#         215
+  C:7F3EH         LINE#         216
+  C:7F3EH         LINE#         217
+  C:7F4CH         LINE#         218
+  C:7F4CH         LINE#         219
+  -------         ENDPROC       CLEARN_TESTDATA
+  -------         PROC          USART2_SENDPREDICTDATA
+  -------         DO            
+  D:0003H         SYMBOL        temp1
+  D:0004H         SYMBOL        Sum
+  -------         ENDDO         
+  C:7C47H         LINE#         223
+  C:7C47H         LINE#         224
+  C:7C47H         LINE#         226
+  C:7C4AH         LINE#         227
+  C:7C4EH         LINE#         228
+  C:7C50H         LINE#         229
+  C:7C50H         LINE#         230
+  C:7C6AH         LINE#         231
+  C:7C87H         LINE#         232
+  C:7CA2H         LINE#         233
+  C:7CA7H         LINE#         234
+  C:7CA9H         LINE#         235
+  C:7CA9H         LINE#         236
+  C:7CB3H         LINE#         237
+  C:7CB8H         LINE#         238
+  C:7CBCH         LINE#         239
+  C:7CBFH         LINE#         241
+  C:7CC1H         LINE#         242
+  C:7CC1H         LINE#         243
+  C:7CCAH         LINE#         244
+  C:7CCFH         LINE#         245
+  -------         ENDPROC       USART2_SENDPREDICTDATA
+  -------         PROC          MAIN
+  -------         DO            
+  X:007FH         SYMBOL        ReceErrorCounter
+  -------         ENDDO         
+  C:7CD0H         LINE#         247
+  C:7CD0H         LINE#         248
+  C:7CD0H         LINE#         249
+  C:7CD4H         LINE#         253
+  C:7CD7H         LINE#         254
+  C:7CDBH         LINE#         255
+  C:7CDFH         LINE#         256
+  C:7CE2H         LINE#         258
+  C:7CE5H         LINE#         259
+  C:7CE8H         LINE#         260
+  C:7CEBH         LINE#         261
+  C:7CEBH         LINE#         262
+  C:7CEBH         LINE#         263
+  C:7CF2H         LINE#         264
+  C:7CF2H         LINE#         265
+  C:7D0AH         LINE#         266
+  C:7D0CH         LINE#         267
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 8
+
+
+  C:7D0EH         LINE#         268
+  C:7D11H         LINE#         269
+  C:7D14H         LINE#         270
+  C:7D18H         LINE#         271
+  C:7D1DH         LINE#         272
+  C:7D20H         LINE#         273
+  C:7D20H         LINE#         274
+  C:7D26H         LINE#         275
+  C:7D26H         LINE#         276
+  C:7D2BH         LINE#         277
+  C:7D30H         LINE#         278
+  C:7D32H         LINE#         279
+  C:7D3DH         LINE#         280
+  C:7D3DH         LINE#         281
+  C:7D42H         LINE#         282
+  C:7D48H         LINE#         283
+  C:7D48H         LINE#         285
+  C:7D4BH         LINE#         286
+  C:7D4BH         LINE#         287
+  C:7D4BH         LINE#         288
+  C:7D4FH         LINE#         289
+  C:7D52H         LINE#         290
+  C:7D52H         LINE#         291
+  -------         ENDPROC       MAIN
+  -------         PROC          USART1_HANDLE
+  C:7DADH         LINE#         296
+  C:7DBEH         LINE#         298
+  C:7DC1H         LINE#         299
+  C:7DC1H         LINE#         300
+  C:7DDCH         LINE#         303
+  C:7DE4H         LINE#         304
+  C:7DE4H         LINE#         305
+  C:7DE9H         LINE#         306
+  C:7DE9H         LINE#         307
+  C:7DEBH         LINE#         308
+  C:7DEBH         LINE#         309
+  C:7DEEH         LINE#         310
+  C:7DEEH         LINE#         311
+  C:7DF0H         LINE#         312
+  C:7DF2H         LINE#         313
+  C:7DF2H         LINE#         314
+  -------         ENDPROC       USART1_HANDLE
+  -------         PROC          USART2_HANDLE
+  C:7E01H         LINE#         318
+  C:7E0CH         LINE#         320
+  C:7E11H         LINE#         321
+  C:7E11H         LINE#         322
+  C:7E13H         LINE#         323
+  C:7E16H         LINE#         324
+  C:7E16H         LINE#         325
+  C:7E1BH         LINE#         326
+  C:7E1BH         LINE#         327
+  C:7E28H         LINE#         328
+  C:7E30H         LINE#         329
+  C:7E30H         LINE#         330
+  C:7E35H         LINE#         331
+  C:7E39H         LINE#         332
+BL51 BANKED LINKER/LOCATER V6.22                                                      05/08/2020  19:28:24  PAGE 9
+
+
+  C:7E39H         LINE#         333
+  C:7E3CH         LINE#         334
+  C:7E3CH         LINE#         335
+  -------         ENDPROC       USART2_HANDLE
+  -------         PROC          TIME0_HANDLE
+  C:7EC9H         LINE#         337
+  C:7ED2H         LINE#         339
+  C:7EDDH         LINE#         340
+  C:7EEAH         LINE#         341
+  C:7EEAH         LINE#         342
+  C:7EECH         LINE#         343
+  C:7EEEH         LINE#         344
+  C:7EF2H         LINE#         345
+  C:7EF4H         LINE#         346
+  C:7EF4H         LINE#         347
+  -------         ENDPROC       TIME0_HANDLE
+  -------         ENDMOD        MAIN
+
+  -------         MODULE        ?C?COPY
+  C:7934H         PUBLIC        ?C?COPY
+  -------         ENDMOD        ?C?COPY
+
+  -------         MODULE        ?C?CLDOPTR
+  C:795AH         PUBLIC        ?C?CLDOPTR
+  -------         ENDMOD        ?C?CLDOPTR
+
+  -------         MODULE        ?C?IMUL
+  C:7987H         PUBLIC        ?C?IMUL
+  -------         ENDMOD        ?C?IMUL
+
+  -------         MODULE        ?C?ILDOPTR
+  C:7999H         PUBLIC        ?C?ILDOPTR
+  -------         ENDMOD        ?C?ILDOPTR
+
+  -------         MODULE        ?C?OFFXADD
+  C:79D1H         PUBLIC        ?C?OFFXADD
+  -------         ENDMOD        ?C?OFFXADD
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_USART1_SENDSTR?MAIN
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_USART2_SENDSTR?MAIN
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SELECTSORT?MAIN
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?CLEARN_TESTDATA?MAIN
+
+Program Size: data=9.3 xdata=1260 code=32585
+LINK/LOCATE RUN COMPLETE.  4 WARNING(S),  0 ERROR(S)
